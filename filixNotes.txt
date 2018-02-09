@@ -2,3 +2,10 @@
 
 check:
 chrome://serviceworker-internals/
+
+3 Events
+- install Events
+
+- activation Events
+
+- fetch event

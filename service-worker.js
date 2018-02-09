@@ -1,4 +1,6 @@
-var cacheName = 'v1';
+
+
+var cacheName = 'v3';
 var cacheFiles = [
     './',
     './index.html',
@@ -25,28 +27,12 @@ self.addEventListener('install', function(e) {
 	); // end e.waitUntil
 });
 
-self.addEventListener('activate', function(e) {
-    console.log("[serviceWorker] activated");
 
-    e.waitUntil(
-
-        caches.keys().then(function(cacheName) {
-            return Promise.all(cacheNames.map(function(thisCacheName) {
-                if (thisCacheName !== cacheName) {
-
-                    console.log("[serviceWorker] Removing Chched files from ",thisCacheName);
-                    return chaches.delete(thisCacheName);
-                }
-            }));
-        })
-    ); // end waitUntil
-});
-
+// activate!
 self.addEventListener('activate', function(e) {
     console.log('[ServiceWorker] Activated');
 
     e.waitUntil(
-
     	// Get all the cache keys (cacheName)
 		caches.keys().then(function(cacheNames) {
 			return Promise.all(cacheNames.map(function(thisCacheName) {
@@ -62,4 +48,42 @@ self.addEventListener('activate', function(e) {
 		})
 	); // end e.waitUntil
 
+});
+
+// fetching
+self.addEventListener('fetch', function(e) {
+    console.log("[ServiceWorker:] Fetching", e.request.url);
+
+    e.respondWith(
+        caches.match(e.request).then(function(response) {
+
+            if (response) {
+                console.log("[ServiceWorker:] Found in cache:", e.request.url);
+                return response;
+            }
+
+            // if
+            var requestClone = e.request.clone();
+            fetch(requestClone)
+                .then(function(response) {
+
+                    if(!response) {
+                        console.log("[ServiceWorker:] no response from fetch");
+                        return response;
+                    }
+
+                    var responseClone = response.clone();
+
+                    caches.open(cacheName).then(function(cache) {
+                        cache.put(e.request, responseClone);
+                        return response;
+
+                    });
+                })
+                .catch(function(err) {
+                    console.log("[ServiceWorker:] Error Fetching & chaching");
+                })
+
+        })
+    )
 });
